@@ -1,4 +1,4 @@
-async def parse_user_identifier(identifier: str) -> int:
+async def parse_user_identifier(identifier: str) -> int | None:
     """Преобразует строковый идентификатор (ID или @username) в user_id.
 
     Возвращает user_id или вызывает исключение при ошибке.
