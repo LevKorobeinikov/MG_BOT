@@ -13,6 +13,7 @@ async def cmd_start(message: Message) -> None:
 
     Start message bot.
     """
+    await message.delete()
     await message.answer(
         WELCOME,
     )

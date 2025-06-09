@@ -79,6 +79,7 @@ async def cmd_show_chat_id(message: Message) -> None:
 
     Show chat id.
     """
+    await message.delete()
     await message.answer(f'{THIS_IS_CHAT_ID.format(message=message.chat.id)}')
 
 
@@ -88,6 +89,7 @@ async def cmd_get_user_id(message: Message) -> None:
 
     Show user id.
     """
+    await message.delete()
     user = message.from_user
     await message.answer(
         THIS_IS_USER_ID.format(
@@ -104,6 +106,7 @@ async def cmd_add_user(message: Message) -> None:
 
     Gen invite for chats and send them for user.
     """
+    await message.delete()
     report = []
     user_id = await get_user_id_check_command(message)
     if not user_id:
@@ -124,6 +127,7 @@ async def cmd_remove_user(message: Message) -> None:
 
     Delete user from chats.
     """
+    await message.delete()
     user_id = await get_user_id_check_command(message)
     success, not_found, errors = [], [], []
     report = []
