@@ -1,5 +1,3 @@
-import re
-
 CHAT_IDS = [
     -1002503054106,
     -1002551712648,
@@ -8,10 +6,9 @@ ADMIN_IDS = [
     930229067,
     844295436,
 ]
-USERNAME_PATTERN = re.compile(r'^@?[a-zA-Z0-9_]{5,32}$')
-WELCOME = (
-    'Добро пожаловать!\nЕсли ты новый сотрудник - жми!\n👇👇👇\n/get_id_user'
-)
+WELCOME = 'Добро пожаловать!\n\n👇👇👇ЖМИ👇👇👇\n/get_id_user'
+ADMIN_CHOICES = 'Что нужно сделать c сотрудником?'
+WELCOME_ADMIN = 'Привет!\n\n👇👇👇ЖМИ👇👇👇\n/user'
 THIS_IS_CHAT_ID = 'ID этого чата: {message}'
 THIS_IS_USER_ID = """
 Ваш ID: {user_id}
@@ -26,3 +23,4 @@ GEN_INVITE_FOR_CHATS = 'Сгенерированы инвайты для чат�
 USER_REMOVE_ID_NOT_CORRECT = 'Укажите user_id: /remove_user <id>'
 BOT_STOP = 'Бот остановлен.'
 NO_CHANGE = 'Нет изменений'
+GIVE_ME_TG_ID = 'Введите тг-айди сотрудника!'

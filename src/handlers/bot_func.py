@@ -1,15 +1,17 @@
 from datetime import datetime, timedelta, timezone
 from typing import List, Tuple
 
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Message
 
 from config import bot
 from constants import (
     CHAT_IDS,
     GEN_INVITE_FOR_CHATS,
+    GIVE_ME_TG_ID,
     INVITE_PUSH,
     NO_CHANGE,
     ONLY_ADMIN,
@@ -17,7 +19,7 @@ from constants import (
     THIS_IS_USER_ID,
     USER_ID_NOT_CORRECT,
 )
-from utils import parse_user_identifier
+from states.bot_func import DeleteUserForm, UserForm
 from validators import is_admin
 
 router = Router()
@@ -28,18 +30,16 @@ async def get_user_id_check_command(
 ) -> None:
     """Take user_id from command and checks for admin rights."""
     if not await is_admin(message.from_user.id):
-        await message.reply(ONLY_ADMIN)
+        await message.answer(ONLY_ADMIN)
         return None
-    parts = message.text.split()
-    if len(parts) < 2:
-        await message.reply(USER_ID_NOT_CORRECT)
+    user_input = message.text.strip()
+    if not user_input:
+        await message.answer(USER_ID_NOT_CORRECT)
         return None
     try:
-        return await parse_user_identifier(parts[1].strip())
-    except ValueError as error:
-        await message.reply(str(error))
-    except Exception as error:
-        await message.reply(f'Неизвестная ошибка: {str(error)}')
+        return int(user_input)
+    except ValueError:
+        await message.answer('Неверный формат ID. Используйте только цифры')
         return None
 
 
@@ -60,16 +60,16 @@ async def send_invites_to_user(user_id: int) -> Tuple[List[str], List[str]]:
                 creates_join_request=False,
             )
             invite_links.append(invite.invite_link)
-        except TelegramBadRequest as e:
-            errors.append(f'{chat_id}: {e.message}')
+        except TelegramBadRequest as error:
+            errors.append(f'{chat_id}: {error.message}')
     if invite_links:
         try:
             await bot.send_message(
                 user_id,
-                INVITE_PUSH + '\n' + '\n'.join(invite_links),
+                INVITE_PUSH + '\n' + '\n\n'.join(invite_links),
             )
-        except TelegramBadRequest as e:
-            errors.append(f'send_message to {user_id}: {e.message}')
+        except TelegramBadRequest as error:
+            errors.append(f'send_message to {user_id}: {error.message}')
     return invite_links, errors
 
 
@@ -100,14 +100,27 @@ async def cmd_get_user_id(message: Message) -> None:
     )
 
 
-@router.message(Command('add_user'))
-async def cmd_add_user(message: Message) -> None:
-    """Command /add_user <user_id>.
+@router.callback_query(F.data.startswith('add_user'))
+async def cmd_add_user(
+    callback: CallbackQuery,
+    state: FSMContext,
+) -> None:
+    """Command /add_user."""
+    await state.clear()
+    await callback.message.delete()
+    await callback.message.answer(
+        GIVE_ME_TG_ID,
+    )
+    await state.set_state(UserForm.tg_id)
 
-    Gen invite for chats and send them for user.
-    """
-    await message.delete()
-    report = []
+
+@router.message(UserForm.tg_id)
+async def proc_tg_id(
+    message: Message,
+    state: FSMContext,
+) -> None:
+    """Take ID and adds to chats."""
+    report: List = []
     user_id = await get_user_id_check_command(message)
     if not user_id:
         return
@@ -118,25 +131,42 @@ async def cmd_add_user(message: Message) -> None:
     if errors:
         report.append('\nОшибки:')
         report.extend(errors)
-    await message.answer('\n'.join(report) if report else 'Ничего не сделано')
-
-
-@router.message(Command('remove_user'))
-async def cmd_remove_user(message: Message) -> None:
-    """Command /remove_user <user_id>.
-
-    Delete user from chats.
-    """
+    await message.answer(
+        '\n'.join(report) if report else 'Ничего не сделано',
+    )
+    await state.clear()
     await message.delete()
+
+
+@router.callback_query(F.data.startswith('remove_user'))
+async def cmd_remove_user(
+    callback: CallbackQuery,
+    state: FSMContext,
+) -> None:
+    """Command /remove_user."""
+    await state.clear()
+    await callback.message.delete()
+    await callback.message.answer(
+        GIVE_ME_TG_ID,
+    )
+    await state.set_state(DeleteUserForm.tg_id)
+
+
+@router.message(DeleteUserForm.tg_id)
+async def proc_tg_id_remove(
+    message: Message,
+    state: FSMContext,
+) -> None:
+    """Take ID and deletes from chats."""
     user_id = await get_user_id_check_command(message)
     success, not_found, errors = [], [], []
-    report = []
+    report: List = []
     for chat_id in CHAT_IDS:
         try:
             await bot.ban_chat_member(chat_id, user_id)
             success.append(chat_id)
-        except TelegramBadRequest as e:
-            desc = e.args[0].lower()
+        except TelegramBadRequest as error:
+            desc = error.args[0].lower()
             if 'not participant' in desc or 'user not found' in desc:
                 not_found.append(chat_id)
             else:
@@ -148,3 +178,5 @@ async def cmd_remove_user(message: Message) -> None:
     if errors:
         report.append(f'Ошибки:\n{", ".join(errors)}')
     await message.answer('\n'.join(report) if report else NO_CHANGE)
+    await state.clear()
+    await message.delete()
