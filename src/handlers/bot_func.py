@@ -15,8 +15,6 @@ from constants import (
     INVITE_PUSH,
     NO_CHANGE,
     ONLY_ADMIN,
-    THIS_IS_CHAT_ID,
-    THIS_IS_USER_ID,
     USER_ID_NOT_CORRECT,
 )
 from states.bot_func import DeleteUserForm, UserForm
@@ -73,33 +71,6 @@ async def send_invites_to_user(user_id: int) -> Tuple[List[str], List[str]]:
     return invite_links, errors
 
 
-@router.message(Command('get_id_chat'))
-async def cmd_show_chat_id(message: Message) -> None:
-    """Command /get_id_chat.
-
-    Show chat id.
-    """
-    await message.delete()
-    await message.answer(f'{THIS_IS_CHAT_ID.format(message=message.chat.id)}')
-
-
-@router.message(Command('get_id_user'))
-async def cmd_get_user_id(message: Message) -> None:
-    """Command /get_id_user.
-
-    Show user id.
-    """
-    await message.delete()
-    user = message.from_user
-    await message.answer(
-        THIS_IS_USER_ID.format(
-            user_id=user.id,
-            username=user.username or '',
-            full_name=f'{user.first_name} {user.last_name or ""}'.strip(),
-        ),
-    )
-
-
 @router.callback_query(F.data.startswith('add_user'))
 async def cmd_add_user(
     callback: CallbackQuery,
@@ -120,6 +91,9 @@ async def proc_tg_id(
     state: FSMContext,
 ) -> None:
     """Take ID and adds to chats."""
+    if message.text == '/cancel':  # Проверяем отмену
+        await cmd_cancel(message, state)
+        return
     report: List = []
     user_id = await get_user_id_check_command(message)
     if not user_id:
@@ -158,6 +132,9 @@ async def proc_tg_id_remove(
     state: FSMContext,
 ) -> None:
     """Take ID and deletes from chats."""
+    if message.text == '/cancel':  # Проверяем отмену
+        await cmd_cancel(message, state)
+        return
     user_id = await get_user_id_check_command(message)
     success, not_found, errors = [], [], []
     report: List = []
@@ -180,3 +157,13 @@ async def proc_tg_id_remove(
     await message.answer('\n'.join(report) if report else NO_CHANGE)
     await state.clear()
     await message.delete()
+
+
+@router.message(Command('cancel'))
+async def cmd_cancel(
+    message: Message,
+    state: FSMContext,
+) -> None:
+    """Cancel all."""
+    await state.clear()
+    await message.answer('Все действия отменены.')
