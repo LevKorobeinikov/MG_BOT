@@ -165,5 +165,6 @@ async def cmd_cancel(
     state: FSMContext,
 ) -> None:
     """Cancel all."""
+    await message.delete()
     await state.clear()
     await message.answer('Все действия отменены.')

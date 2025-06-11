@@ -17,9 +17,9 @@ ADMIN_IDS = [
     930229067,
     844295436,
 ]
-WELCOME = 'Добро пожаловать!\n\n👇👇👇ЖМИ👇👇👇\n/get_id_user'
+WELCOME = 'Добро пожаловать в команду!\n\n👇ЖМИ👇\n/get_id_user'
 ADMIN_CHOICES = 'Что нужно сделать c сотрудником?'
-WELCOME_ADMIN = 'Привет!\n\n👇👇👇ЖМИ👇👇👇\n/user'
+WELCOME_ADMIN = 'Привет!\n\n👇ЖМИ👇\n/user'
 THIS_IS_CHAT_ID = 'ID этого чата: {message}'
 THIS_IS_USER_ID = """
 Ваш ID: {user_id}
