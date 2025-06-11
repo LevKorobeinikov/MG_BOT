@@ -15,7 +15,6 @@ from constants import (
     INVITE_PUSH,
     NO_CHANGE,
     ONLY_ADMIN,
-    USER_ID_NOT_CORRECT,
 )
 from states.bot_func import DeleteUserForm, UserForm
 from validators import is_admin
@@ -31,9 +30,6 @@ async def get_user_id_check_command(
         await message.answer(ONLY_ADMIN)
         return None
     user_input = message.text.strip()
-    if not user_input:
-        await message.answer(USER_ID_NOT_CORRECT)
-        return None
     try:
         return int(user_input)
     except ValueError:
@@ -91,7 +87,7 @@ async def proc_tg_id(
     state: FSMContext,
 ) -> None:
     """Take ID and adds to chats."""
-    if message.text == '/cancel':  # Проверяем отмену
+    if message.text == '/cancel':
         await cmd_cancel(message, state)
         return
     report: List = []

@@ -31,7 +31,6 @@ async def cmd_get_user_id(message: Message) -> None:
     await message.answer(
         THIS_IS_USER_ID.format(
             user_id=user.id,
-            username=user.username or '',
             full_name=f'{user.first_name} {user.last_name or ""}'.strip(),
         ),
     )
